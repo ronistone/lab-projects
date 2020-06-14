@@ -1,0 +1,35 @@
+version: '3'
+services:
+  database:
+    image: postgres:9.6
+    hostname: database
+    ports:
+      - "54321:5432"
+    volumes:
+    - ./initialize-db.sql:/docker-entrypoint-initdb.d/setup.sql
+    environment:
+      POSTGRES_DB: lab
+      POSTGRES_USER: lab
+      POSTGRES_PASSWORD: lab
+  lab-application:
+    image: openjdk:8
+    volumes:
+      - ./target/lab-java-0.0.1-SNAPSHOT.jar:/c/app.jar
+    working_dir: /c
+    entrypoint: >
+              bash -c "java -jar -Dcom.sun.management.jmxremote=true \
+                  -Dcom.sun.management.jmxremote.authenticate=false \
+                  -Djava.rmi.server.hostname=0.0.0.0 \
+                  -Dcom.sun.management.jmxremote.local.only=false \
+                  -Dcom.sun.management.jmxremote.port=8081 \
+                  -Dcom.sun.management.jmxremote.rmi.port=8082 \
+                  app.jar"
+    ports:
+      - 8080:8080
+      - 8081:8081
+      - 8082:8082
+    environment:
+      DATABASE_HOST: database
+      DATABASE_PORT: 5432
+    depends_on:
+      - database
